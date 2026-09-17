@@ -8,6 +8,13 @@
 <meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>📅</text></svg>">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="EB-1 India">
+<meta name="mobile-web-app-capable" content="yes">
 <style>
 :root {
   color-scheme: light;
@@ -182,6 +189,26 @@ td.num { font-variant-numeric: tabular-nums; }
   padding: 2px 6px; border-radius: 6px; font-size: 12.5px;
 }
 
+.offline-bar {
+  margin: 0 0 16px; padding: 9px 12px; font-size: 13px;
+  background: var(--surface); color: var(--ink-2);
+  border: 1px solid var(--border); border-left: 3px solid var(--warning);
+  border-radius: 10px;
+}
+.offline-bar[hidden] { display: none; }
+
+.install {
+  margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--grid);
+  font-size: 12.5px; color: var(--muted);
+}
+.install[hidden] { display: none; }
+.install button {
+  font: inherit; font-size: 13px; font-weight: 600;
+  padding: 7px 14px; margin-bottom: 6px;
+  background: var(--ink); color: var(--surface);
+  border: 0; border-radius: 999px; cursor: pointer;
+}
+
 footer { margin-top: 32px; font-size: 12.5px; color: var(--muted); }
 footer p { margin: 0 0 6px; }
 a { color: inherit; }
@@ -201,6 +228,11 @@ a { color: inherit; }
   <p class="freshness" id="freshness"><span class="dot none"></span><span>Loading…</span></p>
 </header>
 
+<div class="offline-bar" id="offline-bar" hidden>
+  <strong>Offline.</strong> Showing the last data this device downloaded —
+  check the timestamp above before relying on it.
+</div>
+
 <main id="main">
   <div class="empty" id="loading">
     <h2>Loading…</h2>
@@ -211,6 +243,11 @@ a { color: inherit; }
   <p id="source-line"></p>
   <p>Data and code:
      <a href="https://github.com/droidguy91/visa-bulletin-tracker">github.com/droidguy91/visa-bulletin-tracker</a></p>
+  <div class="install" id="install" hidden>
+    <div id="install-action"></div>
+    <span id="install-why"></span>
+  </div>
+
   <p class="disclaimer">Figures are transcribed from the U.S. Department of State
      Visa Bulletin and link to their source. This is an information tool, not legal
      advice.</p>
@@ -744,6 +781,68 @@ async function boot() {
   render();
 }
 
+// --- PWA plumbing ----------------------------------------------------
+
+const standalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches ||
+  window.navigator.standalone === true;
+
+function offlineUI() {
+  const bar = document.getElementById("offline-bar");
+  const sync = () => { bar.hidden = navigator.onLine; };
+  addEventListener("online", () => { sync(); boot(); });
+  addEventListener("offline", sync);
+  sync();
+}
+
+function installUI() {
+  const box = document.getElementById("install");
+  const action = document.getElementById("install-action");
+  const why = document.getElementById("install-why");
+  if (standalone()) return;
+
+  const iOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  let deferred = null;
+  addEventListener("beforeinstallprompt", ev => {
+    ev.preventDefault();
+    deferred = ev;
+    const b = el("button", { type: "button" }, "Add to home screen");
+    b.onclick = async () => {
+      b.disabled = true;
+      deferred.prompt();
+      await deferred.userChoice;
+      deferred = null;
+      box.hidden = true;
+    };
+    action.replaceChildren(b);
+    why.textContent = "Installing keeps it one tap away and lets it work offline.";
+    box.hidden = false;
+  });
+
+  if (iOS) {
+    // iOS never fires beforeinstallprompt, and push there requires the app to
+    // be installed to the home screen first -- so say so rather than leaving
+    // an empty affordance.
+    why.textContent = "To install: tap Share, then “Add to Home Screen”. " +
+      "On iPhone and iPad this is also what makes notifications possible later.";
+    box.hidden = false;
+  }
+}
+
+function registerSW() {
+  if (!("serviceWorker" in navigator)) return;
+  addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => {
+      console.warn("service worker registration failed:", err);
+    });
+  });
+}
+
+offlineUI();
+installUI();
+registerSW();
 boot();
 })();
 </script>
