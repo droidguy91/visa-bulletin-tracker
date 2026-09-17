@@ -110,15 +110,64 @@ Two independent layers, because they catch different things:
 Once the first live backfill lands, replace the reconstructed fixtures with
 real archived pages from `data/raw/` and add more golden values.
 
+## Where this runs, and why it is not GitHub Actions
+
+The first live backfill made **zero requests**. `travel.state.gov` sits
+behind Cloudflare, which serves an "Attention Required!" challenge page to
+GitHub's runner IPs -- including for `/robots.txt`. The fetcher correctly
+reads a 403 on robots.txt as a full disallow (RFC 9309) and refuses to
+crawl, so nothing was ever fetched.
+
+Worth being precise about what this is: the site publishes **no robots.txt
+at all** (it returns 404 from a residential connection). The 403 is edge bot
+protection reacting to *where the request comes from*, not a crawl directive.
+Every politeness measure in `fetch.py` is beside the point here -- the
+request is refused for who it is, not what it does.
+
+**This is not worked around.** Rotating IPs, spoofing a browser User-Agent
+or solving the challenge are all bot-detection evasion. The fetcher moves to
+a machine on an ordinary residential connection instead.
+
+## Deployment (Linux, systemd)
+
+On a Linux box that stays on -- a home server, a Raspberry Pi:
+
+```bash
+git clone https://github.com/droidguy91/visa-bulletin-tracker.git
+cd visa-bulletin-tracker
+./deploy/install.sh
+```
+
+The installer checks reachability **first** and aborts if this machine is
+challenged too, rather than installing something that cannot work. Then it
+creates a virtualenv, asks for a push token (stored mode 600 outside the
+repo), installs a systemd **user** timer, and runs one poll so you see a
+real result immediately.
+
+| | |
+|---|---|
+| Schedule | `systemctl --user list-timers visa-bulletin.timer` |
+| Logs | `journalctl --user -u visa-bulletin.service -n 50` |
+| Last run | `cat ~/.local/share/visa-bulletin/repo/data/last_run.json` |
+| Run now | `systemctl --user start visa-bulletin.service` |
+
+`Persistent=true` catches up a run missed while the machine was off, and
+`RandomizedDelaySec=300` keeps requests off a fixed second. For the timer to
+fire while you are not logged in: `sudo loginctl enable-linger $USER`.
+
+macOS has no systemd; the equivalent is a launchd agent, which this repo
+does not ship. The GitHub Actions workflows remain in the tree but are
+**disabled** -- they are kept for the test suite and for manual dispatch if
+the source ever stops challenging datacentre IPs.
+
 ## Known constraint
 
-The sandbox this was built in blocks outbound requests to `travel.state.gov`
-at the network-policy level, so the parser has never been run against a live
-page here. It is written defensively — anything unexpected raises
-`ParseError` rather than writing a guess — and the first `backfill` run in
-GitHub Actions is the real test. Expect to iterate on `parse.py` once real
-pages land; the archived HTML in `data/raw/` means that iteration costs no
-further requests.
+The parser has still never seen a live page: both machines available while
+this was built are blocked from `travel.state.gov`, one by Cloudflare and
+one by an egress policy. It is written defensively -- anything unexpected
+raises `ParseError` rather than writing a guess -- and each page is archived
+**before** parsing, so the first run on your own hardware leaves the real
+HTML on disk to fix against without spending further requests.
 
 ## Next
 
