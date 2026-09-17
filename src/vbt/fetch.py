@@ -66,6 +66,7 @@ class Fetcher:
         self.timeout = timeout
         self._sleep = sleep
         self._robots: urllib.robotparser.RobotFileParser | None = None
+        self.robots_status: object = None
 
     # -- rate ceiling ----------------------------------------------------
 
@@ -94,14 +95,30 @@ class Fetcher:
     # -- robots ----------------------------------------------------------
 
     def robots_allows(self, url: str) -> bool:
-        """FR-2.9. A missing robots.txt (404) means no restrictions."""
+        """FR-2.9. A missing robots.txt (404) means no restrictions.
+
+        RFC 9309 says 401/403 on robots.txt means access denied, so we honour
+        that as a full disallow rather than crawling anyway. We record the
+        status because a 403 here is ambiguous: it can be a real policy, or a
+        bot-protection layer reacting to the IP we happen to be calling from.
+        """
         if self._robots is None:
-            rp = urllib.robotparser.RobotFileParser()
-            rp.set_url(ROBOTS_URL)
+            body = ""
             try:
-                rp.read()
-            except Exception:
-                rp.allow_all = True
+                req = urllib.request.Request(
+                    ROBOTS_URL, headers={"User-Agent": USER_AGENT})
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    self.robots_status = resp.status
+                    body = resp.read().decode("utf-8", "replace")
+            except urllib.error.HTTPError as exc:
+                self.robots_status = exc.code
+            except Exception as exc:  # noqa: BLE001
+                self.robots_status = f"error: {exc}"
+
+            rp = urllib.robotparser.RobotFileParser()
+            rp.parse(body.splitlines())
+            if self.robots_status in (401, 403):
+                rp.disallow_all = True
             self._robots = rp
         try:
             return self._robots.can_fetch(USER_AGENT, url)

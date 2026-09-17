@@ -10,7 +10,7 @@ import time
 from datetime import date
 
 from . import store
-from .fetch import Fetcher, RateCeilingExceeded
+from .fetch import Fetcher, RateCeilingExceeded, USER_AGENT
 from .model import ParseError
 from .parse import parse_bulletin, parse_index
 from .urls import bulletin_url, months_to_backfill, month_key, parse_month_key
@@ -32,8 +32,11 @@ def _fetch_and_store(fetcher: Fetcher, month: str) -> bool:
     resp = fetcher.get(url)
     if resp.body is None:
         return False
+    # Archive first, parse second. A parse failure then leaves the page on
+    # disk so the fix can be built offline without spending more requests.
+    store.save_raw(month, resp.body)
     record = parse_bulletin(resp.body, month, url)
-    store.save_bulletin(record, raw_html=resp.body)
+    store.save_bulletin(record, raw_html=None)
     print(
         f"  {month}  FA={record.final_action.raw:<8} "
         f"DFF={record.dates_for_filing.raw}"
@@ -82,6 +85,15 @@ def cmd_backfill(args) -> int:
     finally:
         store.save_state(state)
         store.build_series()
+        store.save_run_report({
+            "command": "backfill",
+            "attempted": len(pending),
+            "succeeded": len(pending) - len(failures),
+            "requests_today": fetcher.requests_today(),
+            "robots_status": fetcher.robots_status,
+            "user_agent": USER_AGENT,
+            "failures": [{"month": m, "error": e} for m, e in failures],
+        })
 
     if failures:
         print(f"\n{len(failures)} month(s) failed:", file=sys.stderr)
@@ -123,6 +135,13 @@ def cmd_poll(args) -> int:
         state["last_checked_at"] = _now()
         store.save_state(state)
         series = store.build_series()
+        store.save_run_report({
+            "command": "poll",
+            "new_months": new_months,
+            "requests_today": fetcher.requests_today(),
+            "robots_status": fetcher.robots_status,
+            "exit_code": exit_code,
+        })
 
     _emit_github_output(
         new_bulletin="true" if new_months else "false",

@@ -72,6 +72,28 @@ def save_bulletin(record: BulletinRecord, raw_html: str | None = None) -> None:
             fh.write(raw_html)
 
 
+def save_raw(month: str, html: str) -> None:
+    """Archive the source page BEFORE parsing it.
+
+    If the parser then fails, the page is still on disk and the fix can be
+    developed offline against it -- which matters a lot when the machine
+    doing the debugging cannot reach the source site at all.
+    """
+    RAW.mkdir(parents=True, exist_ok=True)
+    with gzip.open(RAW / f"{month}.html.gz", "wt", encoding="utf-8") as fh:
+        fh.write(html)
+
+
+def save_run_report(report: dict) -> None:
+    """Machine-readable outcome of the last run.
+
+    Committed with the data, so a failure is diagnosable without reading CI
+    logs -- and it is what the dashboard's freshness indicator reads.
+    """
+    report["written_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    _write_json(DATA / "last_run.json", report)
+
+
 def load_bulletin(month: str) -> BulletinRecord:
     return BulletinRecord.from_json(
         json.loads(bulletin_path(month).read_text("utf-8"))
