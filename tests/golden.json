@@ -1,4 +1,16 @@
 {
-  "2015-10": { "final_action": "C", "dates_for_filing": "C" },
-  "2026-09": { "final_action": "15OCT22", "dates_for_filing": "01DEC23" }
+  "_provenance": "EB-1 India cutoffs read independently from the published bulletins, NOT produced by this parser. They exist so the first live backfill is checked against something external. If `vbt verify` flags one of these, confirm against the linked bulletin before assuming the parser is wrong.",
+  "_source": "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+  "months": {
+    "2015-10": { "final_action": "C",        "dates_for_filing": "C" },
+    "2019-10": { "final_action": "01JAN15",  "dates_for_filing": "15MAR17" },
+    "2022-10": { "final_action": "C",        "dates_for_filing": "C" },
+    "2023-10": { "final_action": "01JAN17",  "dates_for_filing": "01JUL19" },
+    "2024-10": { "final_action": "01FEB22",  "dates_for_filing": "15APR22" },
+    "2025-10": { "final_action": "15FEB22",  "dates_for_filing": "15APR23" },
+    "2026-06": { "final_action": "15DEC22",  "dates_for_filing": "01DEC23" },
+    "2026-07": { "final_action": "15OCT22",  "dates_for_filing": "01DEC23" },
+    "2026-08": { "final_action": "15OCT22",  "dates_for_filing": "01DEC23" },
+    "2026-09": { "final_action": "15OCT22",  "dates_for_filing": "01DEC23" }
+  }
 }
