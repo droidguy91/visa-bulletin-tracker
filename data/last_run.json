@@ -1,0 +1,19 @@
+{
+  "command": "backfill",
+  "attempted": 2,
+  "succeeded": 0,
+  "requests_today": 0,
+  "robots_status": 403,
+  "user_agent": "visa-bulletin-tracker/0.1 (personal priority-date tracker; +https://github.com/droidguy91/visa-bulletin-tracker)",
+  "failures": [
+    {
+      "month": "2015-10",
+      "error": "robots.txt disallows https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2016/visa-bulletin-for-october-2015.html"
+    },
+    {
+      "month": "2015-11",
+      "error": "robots.txt disallows https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2016/visa-bulletin-for-november-2015.html"
+    }
+  ],
+  "written_at": "2026-09-17T19:50:12+00:00"
+}
