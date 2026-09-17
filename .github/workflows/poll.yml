@@ -3,10 +3,14 @@ name: Poll Visa Bulletin
 # FR-2.1: every 30 minutes during the publication window (the 5th to the
 # 20th), limited to roughly 08:00-20:00 US Eastern, plus one daily check the
 # rest of the month. GitHub cron is UTC.
+# SCHEDULE DISABLED. GitHub's runner IPs get a Cloudflare challenge from
+# travel.state.gov (see data/last_run.json and the README), so every
+# scheduled run failed before issuing a single request -- and each failure
+# opened an issue. Polling now runs from a machine on a residential
+# connection via systemd (deploy/install.sh).
+#
+# Re-enable only if the source stops challenging datacentre IPs.
 on:
-  schedule:
-    - cron: "*/30 12-23 5-20 * *"   # publication window, business hours ET
-    - cron: "0 15 * * *"            # daily heartbeat
   workflow_dispatch:
 
 # Never let two polls overlap -- the request ledger is a file, and a race

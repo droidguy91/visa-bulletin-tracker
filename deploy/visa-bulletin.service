@@ -1,0 +1,12 @@
+[Unit]
+Description=Visa Bulletin tracker poll
+Documentation=https://github.com/droidguy91/visa-bulletin-tracker
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/share/visa-bulletin/sync.sh
+# The poll backs off for minutes on a 403/429, so give it room.
+TimeoutStartSec=1800
+Nice=10
