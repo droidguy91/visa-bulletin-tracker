@@ -217,7 +217,9 @@ def cmd_series(args) -> int:
 def cmd_verify(args) -> int:
     """Check stored data against known-good values and internal consistency."""
     golden_path = store.ROOT / "tests" / "golden.json"
-    golden = json.loads(golden_path.read_text("utf-8")) if golden_path.exists() else {}
+    raw = json.loads(golden_path.read_text("utf-8")) if golden_path.exists() else {}
+    # Keys beginning with "_" are provenance notes, not months.
+    golden = raw.get("months", {k: v for k, v in raw.items() if not k.startswith("_")})
 
     problems: list[str] = []
     months = store.all_months()
