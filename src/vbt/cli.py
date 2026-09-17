@@ -174,6 +174,39 @@ def cmd_ingest(args) -> int:
     return 0
 
 
+def cmd_probe(args) -> int:
+    """Fetch only robots.txt and record what came back.
+
+    Fetching robots.txt is never itself governed by robots.txt, so this is
+    safe to run when the crawl guard is refusing everything. It exists to
+    distinguish a real published directive from edge bot-protection.
+    """
+    import urllib.error
+    import urllib.request
+
+    from .fetch import ROBOTS_URL, USER_AGENT as UA
+
+    report = {"command": "probe", "url": ROBOTS_URL, "user_agent": UA}
+    try:
+        req = urllib.request.Request(ROBOTS_URL, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = resp.read().decode("utf-8", "replace")
+            report.update(status=resp.status,
+                          headers=dict(resp.headers),
+                          body=body[:800])
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace") if exc.fp else ""
+        report.update(status=exc.code,
+                      headers=dict(exc.headers or {}),
+                      body=body[:800])
+    except Exception as exc:  # noqa: BLE001
+        report.update(status=f"error: {exc}")
+
+    store.save_run_report(report)
+    print(json.dumps(report, indent=2)[:2000])
+    return 0
+
+
 def cmd_series(args) -> int:
     series = store.build_series()
     print(f"Wrote series.json: {series['count']} months, "
@@ -271,6 +304,9 @@ def main(argv=None) -> int:
     p.add_argument("path")
     p.add_argument("--month", required=True, help="YYYY-MM")
     p.set_defaults(func=cmd_ingest)
+
+    p = sub.add_parser("probe", help="fetch robots.txt only and record it")
+    p.set_defaults(func=cmd_probe)
 
     p = sub.add_parser("series", help="rebuild series.json")
     p.set_defaults(func=cmd_series)
