@@ -1,19 +1,23 @@
 {
-  "command": "backfill",
-  "attempted": 2,
-  "succeeded": 0,
-  "requests_today": 0,
-  "robots_status": 403,
+  "command": "probe",
+  "url": "https://travel.state.gov/robots.txt",
   "user_agent": "visa-bulletin-tracker/0.1 (personal priority-date tracker; +https://github.com/droidguy91/visa-bulletin-tracker)",
-  "failures": [
-    {
-      "month": "2015-10",
-      "error": "robots.txt disallows https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2016/visa-bulletin-for-october-2015.html"
-    },
-    {
-      "month": "2015-11",
-      "error": "robots.txt disallows https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/2016/visa-bulletin-for-november-2015.html"
-    }
-  ],
-  "written_at": "2026-09-17T19:50:12+00:00"
+  "status": 403,
+  "headers": {
+    "Date": "Thu, 17 Sep 2026 19:51:31 GMT",
+    "Content-Type": "text/html; charset=UTF-8",
+    "Transfer-Encoding": "chunked",
+    "Connection": "close",
+    "Cache-Control": "private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0",
+    "Expires": "Thu, 01 Jan 1970 00:00:01 GMT",
+    "Referrer-Policy": "same-origin",
+    "Server-Timing": "cfEdge;dur=4,cfOrigin;dur=0",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+    "set-cookie": "__cf_bm=ALEJzHQgZLXh6NVzN3BFxY0TSqvP.p7mN9EtuWKkgeY-1789674691.4157102-1.0.1.1-woesV1QK7CgSbgUrMwdTL57belc5ASZOnbYaJ0qvxeaq_xbfH_YMFXm76Op4YZRMIOJQiIsf9ACa_9C2lHRR3dcea9kWtDRKYHgIWNG1kmc_401KsR24IaJ_J2.cutLR; HttpOnly; SameSite=None; Secure; Path=/; Domain=travel.state.gov; Expires=Thu, 17 Sep 2026 20:21:31 GMT",
+    "Server": "cloudflare",
+    "CF-RAY": "a3caa5655ce410f5-ORD"
+  },
+  "body": "<!DOCTYPE html>\n<!--[if lt IE 7]> <html class=\"no-js ie6 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 7]>    <html class=\"no-js ie7 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if IE 8]>    <html class=\"no-js ie8 oldie\" lang=\"en-US\"> <![endif]-->\n<!--[if gt IE 8]><!--> <html class=\"no-js\" lang=\"en-US\"> <!--<![endif]-->\n<head>\n<title>Attention Required! | Cloudflare</title>\n<meta charset=\"UTF-8\" />\n<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n<meta http-equiv=\"X-UA-Compatible\" content=\"IE=Edge\" />\n<meta name=\"robots\" content=\"noindex, nofollow\" />\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\" />\n<link rel=\"stylesheet\" id=\"cf_styles-css\" href=\"/cdn-cgi/styles/cf.errors.css\" />\n<!--[if lt IE 9]><link rel=\"stylesheet\" id='cf_styles-ie-css' href=\"/cdn-cgi",
+  "written_at": "2026-09-17T19:51:31+00:00"
 }
