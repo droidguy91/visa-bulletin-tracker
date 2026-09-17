@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EB-1 India · Visa Bulletin</title>
+<meta name="description" content="EB-1 India priority date tracker">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>📅</text></svg>">
+<style>
+:root {
+  color-scheme: light;
+  --plane:        #f9f9f7;
+  --surface:      #fcfcfb;
+  --ink:          #0b0b0b;
+  --ink-2:        #52514e;
+  --muted:        #898781;
+  --grid:         #e1e0d9;
+  --axis:         #c3c2b7;
+  --border:       rgba(11,11,11,0.10);
+  --series-fa:    #2a78d6;
+  --series-dff:   #eb6834;
+  --pos:          #2a78d6;
+  --neg:          #e34948;
+  --good:         #0ca30c;
+  --good-ink:     #006300;
+  --critical:     #d03b3b;
+  --warning:      #fab219;
+  --radius: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plane:      #0d0d0d;
+    --surface:    #1a1a19;
+    --ink:        #ffffff;
+    --ink-2:      #c3c2b7;
+    --muted:      #898781;
+    --grid:       #2c2c2a;
+    --axis:       #383835;
+    --border:     rgba(255,255,255,0.10);
+    --series-fa:  #3987e5;
+    --series-dff: #d95926;
+    --pos:        #3987e5;
+    --neg:        #e66767;
+    --good-ink:   #0ca30c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plane: #0d0d0d; --surface: #1a1a19; --ink: #fff; --ink-2: #c3c2b7;
+  --muted: #898781; --grid: #2c2c2a; --axis: #383835;
+  --border: rgba(255,255,255,0.10);
+  --series-fa: #3987e5; --series-dff: #d95926;
+  --pos: #3987e5; --neg: #e66767; --good-ink: #0ca30c;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--plane);
+  color: var(--ink);
+  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-text-size-adjust: 100%;
+  padding: 0 16px env(safe-area-inset-bottom);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 24px 0 64px; }
+
+header { margin-bottom: 20px; }
+h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: 14px; margin: 0; }
+.freshness {
+  margin-top: 10px; font-size: 12.5px; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--good); flex: none; }
+.dot.stale { background: var(--warning); }
+.dot.bad   { background: var(--critical); }
+.dot.none  { background: var(--muted); }
+
+.cards { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 560px) { .cards { grid-template-columns: 1fr 1fr; } }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.card h2 {
+  font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin: 0 0 10px; font-weight: 600;
+}
+.value { font-size: 30px; line-height: 1.1; letter-spacing: -0.02em; margin: 0; }
+.value.small { font-size: 22px; }
+.state {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 600; margin-top: 10px;
+  padding: 3px 9px 3px 7px; border-radius: 999px;
+  border: 1px solid var(--border);
+}
+.state .ic { font-size: 12px; line-height: 1; }
+.state.is-current  { color: var(--good-ink); }
+.state.not-current { color: var(--ink-2); }
+.state.is-retro    { color: var(--critical); }
+.gap { margin: 10px 0 0; font-size: 13.5px; color: var(--ink-2); }
+.delta { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
+.delta b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.delta.up b   { color: var(--good-ink); }
+.delta.down b { color: var(--critical); }
+
+.notice {
+  margin-top: 12px; padding: 12px 14px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); font-size: 13px; color: var(--ink-2);
+}
+.notice strong { color: var(--ink); }
+
+section.chart {
+  margin-top: 24px; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px 12px 12px;
+}
+.chart-head { padding: 0 4px; margin-bottom: 4px; }
+.chart-head h2 { font-size: 15px; margin: 0 0 2px; }
+.chart-head p { margin: 0; font-size: 13px; color: var(--muted); }
+
+.legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 8px 4px 0; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.swatch.line { height: 3px; border-radius: 2px; width: 14px; }
+.swatch.dash {
+  height: 0; width: 14px; border: 0; border-top: 2px dashed var(--muted);
+}
+
+.ranges { display: flex; gap: 6px; padding: 10px 4px 0; flex-wrap: wrap; }
+.ranges button {
+  font: inherit; font-size: 12.5px; padding: 4px 10px;
+  background: transparent; color: var(--ink-2);
+  border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+}
+.ranges button[aria-pressed="true"] {
+  background: var(--ink); color: var(--surface); border-color: var(--ink);
+}
+
+svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.tip {
+  position: absolute; pointer-events: none; z-index: 5;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 8px 10px; font-size: 12.5px; line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+  opacity: 0; transition: opacity .1s; min-width: 150px;
+}
+.tip.on { opacity: 1; }
+.tip .m { color: var(--muted); font-size: 11.5px; letter-spacing: .04em;
+          text-transform: uppercase; display: block; margin-bottom: 4px; }
+.tip .row { display: flex; align-items: center; gap: 7px; }
+.tip .row + .row { margin-top: 3px; }
+.tip .v { margin-left: auto; font-variant-numeric: tabular-nums; }
+.plotwrap { position: relative; }
+
+details.table { margin-top: 20px; }
+details.table summary {
+  cursor: pointer; font-size: 13.5px; color: var(--ink-2); padding: 6px 2px;
+}
+table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); }
+th { color: var(--muted); font-weight: 600; font-size: 11.5px;
+     text-transform: uppercase; letter-spacing: .05em; }
+td.num { font-variant-numeric: tabular-nums; }
+
+.empty {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 28px 20px; text-align: center;
+}
+.empty h2 { font-size: 16px; margin: 0 0 8px; }
+.empty p { color: var(--ink-2); margin: 0 auto 6px; max-width: 42ch; font-size: 14px; }
+.empty code {
+  background: var(--plane); border: 1px solid var(--border);
+  padding: 2px 6px; border-radius: 6px; font-size: 12.5px;
+}
+
+footer { margin-top: 32px; font-size: 12.5px; color: var(--muted); }
+footer p { margin: 0 0 6px; }
+a { color: inherit; }
+.disclaimer { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--grid); }
+.vh {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>EB-1 India</h1>
+  <p class="sub" id="sub">Priority date —</p>
+  <p class="freshness" id="freshness"><span class="dot none"></span><span>Loading…</span></p>
+</header>
+
+<main id="main">
+  <div class="empty" id="loading">
+    <h2>Loading…</h2>
+  </div>
+</main>
+
+<footer>
+  <p id="source-line"></p>
+  <p>Data and code:
+     <a href="https://github.com/droidguy91/visa-bulletin-tracker">github.com/droidguy91/visa-bulletin-tracker</a></p>
+  <p class="disclaimer">Figures are transcribed from the U.S. Department of State
+     Visa Bulletin and link to their source. This is an information tool, not legal
+     advice.</p>
+</footer>
+
+</div>
+
+<script>
+(() => {
+"use strict";
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DAY = 86400000;
+
+const fmtDate = iso => {
+  const d = new Date(iso + "T00:00:00Z");
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+};
+const fmtMonth = key => {
+  const [y, m] = key.split("-");
+  return `${MONTHS[+m - 1]} ${y}`;
+};
+const fmtMonthShort = key => {
+  const [y, m] = key.split("-");
+  return `${MONTHS[+m - 1]} ’${y.slice(2)}`;
+};
+// Days -> "11 months" / "1 yr 2 mo" / "18 days". Approximate by design: the
+// exact day count is shown alongside, this is the readable gloss.
+const humanSpan = days => {
+  const a = Math.abs(days);
+  if (a < 45) return `${a} day${a === 1 ? "" : "s"}`;
+  const months = Math.round(a / 30.44);
+  if (months < 18) return `${months} month${months === 1 ? "" : "s"}`;
+  const yrs = Math.floor(months / 12), rem = months % 12;
+  return rem ? `${yrs} yr ${rem} mo` : `${yrs} yr${yrs === 1 ? "" : "s"}`;
+};
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v;
+    else if (k === "html") n.innerHTML = v;
+    else n.setAttribute(k, v);
+  }
+  kids.forEach(c => n.append(c));
+  return n;
+};
+const svgEl = (tag, attrs = {}) => {
+  const n = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  return n;
+};
+
+// --- rendering -------------------------------------------------------
+
+const main = document.getElementById("main");
+
+function renderEmpty(reason) {
+  main.replaceChildren(el("div", { class: "empty" },
+    el("h2", {}, "No bulletin data yet"),
+    el("p", {}, reason),
+    el("p", { html: 'Once the fetcher runs, <code>data/series.json</code> ' +
+                    'lands in the repo and this page fills in automatically.' })
+  ));
+}
+
+function stateOf(cut, isCurrent, retrogressed) {
+  if (cut.status === "U") return { cls: "is-retro", ic: "●", label: "Unavailable" };
+  if (isCurrent)          return { cls: "is-current", ic: "✓", label: "Current" };
+  if (retrogressed)       return { cls: "is-retro", ic: "▼", label: "Retrogressed" };
+  return { cls: "not-current", ic: "○", label: "Not current" };
+}
+
+function card(title, cut, daysFromPd, isCurrent, deltaDays, extra) {
+  const s = stateOf(cut, isCurrent, deltaDays != null && deltaDays < 0);
+  const c = el("div", { class: "card" }, el("h2", {}, title));
+
+  if (cut.status === "DATE") {
+    c.append(el("p", { class: "value" }, fmtDate(cut.date)));
+  } else {
+    c.append(el("p", { class: "value small" },
+      cut.status === "C" ? "Current — no backlog" : "No visas available"));
+  }
+
+  c.append(el("span", { class: "state " + s.cls },
+    el("span", { class: "ic" }, s.ic), el("span", {}, s.label)));
+
+  if (daysFromPd != null) {
+    const ahead = daysFromPd >= 0;
+    c.append(el("p", { class: "gap" },
+      `${humanSpan(daysFromPd)} ${ahead ? "past" : "short of"} your priority date ` +
+      `(${ahead ? "+" : "−"}${Math.abs(daysFromPd)} days)`));
+  }
+
+  if (deltaDays != null) {
+    const dir = deltaDays > 0 ? "up" : deltaDays < 0 ? "down" : "";
+    const txt = deltaDays === 0 ? "No movement"
+      : `${deltaDays > 0 ? "Advanced" : "Retrogressed"} ${Math.abs(deltaDays)} days`;
+    c.append(el("p", { class: "delta " + dir },
+      el("b", {}, txt), document.createTextNode(" since last bulletin")));
+  } else {
+    c.append(el("p", { class: "delta" }, "No comparable movement figure"));
+  }
+
+  if (extra) c.append(extra);
+  return c;
+}
+
+// --- charts ----------------------------------------------------------
+//
+// A cutoff is a date, "C", or "U". Only dates can sit on a date axis, so
+// C and U are drawn in their own labelled strips and the line is broken
+// rather than interpolated across them. Inventing a y-value for "Current"
+// would be a lie the chart tells confidently.
+
+function lineChart(points, pdIso, width) {
+  const H = Math.min(300, Math.max(210, Math.round(width * 0.62)));
+  const M = { t: 14, r: 12, b: 26, l: 52 };
+  const STRIP = 16, GAPS = 8;
+  const innerW = width - M.l - M.r;
+  const plotTop = M.t + STRIP + GAPS;
+  const plotBot = H - M.b - STRIP - GAPS;
+  const plotH = plotBot - plotTop;
+
+  const pd = Date.parse(pdIso + "T00:00:00Z");
+  const dated = [];
+  points.forEach(p => {
+    ["final_action", "dates_for_filing"].forEach(k => {
+      if (p[k].date) dated.push(Date.parse(p[k].date + "T00:00:00Z"));
+    });
+  });
+  dated.push(pd);
+  let lo = Math.min(...dated), hi = Math.max(...dated);
+  const pad = Math.max((hi - lo) * 0.08, 30 * DAY);
+  lo -= pad; hi += pad;
+
+  const n = points.length;
+  const x = i => M.l + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW);
+  const y = t => plotBot - ((t - lo) / (hi - lo)) * plotH;
+
+  const svg = svgEl("svg", {
+    viewBox: `0 0 ${width} ${H}`, width, height: H,
+    role: "img", "aria-label": "Cutoff dates by bulletin month"
+  });
+
+  // y gridlines at year boundaries
+  const y0 = new Date(lo).getUTCFullYear(), y1 = new Date(hi).getUTCFullYear();
+  const step = Math.max(1, Math.ceil((y1 - y0) / 6));
+  for (let yr = y0 + 1; yr <= y1; yr += step) {
+    const t = Date.UTC(yr, 0, 1);
+    if (t < lo || t > hi) continue;
+    svg.append(svgEl("line", {
+      x1: M.l, x2: width - M.r, y1: y(t), y2: y(t),
+      stroke: "var(--grid)", "stroke-width": 1
+    }));
+    const lbl = svgEl("text", {
+      x: M.l - 8, y: y(t) + 4, "text-anchor": "end",
+      fill: "var(--muted)", "font-size": 11
+    });
+    lbl.textContent = yr;
+    svg.append(lbl);
+  }
+
+  // fiscal-year boundaries (1 October)
+  points.forEach((p, i) => {
+    if (p.month.slice(5) !== "10") return;
+    svg.append(svgEl("line", {
+      x1: x(i), x2: x(i), y1: plotTop, y2: plotBot,
+      stroke: "var(--grid)", "stroke-width": 1, "stroke-dasharray": "2 4"
+    }));
+  });
+
+  // priority-date reference line
+  if (pd >= lo && pd <= hi) {
+    svg.append(svgEl("line", {
+      x1: M.l, x2: width - M.r, y1: y(pd), y2: y(pd),
+      stroke: "var(--muted)", "stroke-width": 2, "stroke-dasharray": "5 4"
+    }));
+    const t = svgEl("text", {
+      x: M.l + 4, y: y(pd) - 6, fill: "var(--muted)", "font-size": 11
+    });
+    t.textContent = "Your priority date";
+    svg.append(t);
+  }
+
+  // strips for C / U
+  const strip = (yPos, label) => {
+    const t = svgEl("text", {
+      x: M.l - 8, y: yPos + 4, "text-anchor": "end",
+      fill: "var(--muted)", "font-size": 10
+    });
+    t.textContent = label;
+    svg.append(t);
+  };
+  const cY = M.t + STRIP / 2, uY = H - M.b - STRIP / 2;
+  if (points.some(p => p.final_action.status === "C" || p.dates_for_filing.status === "C"))
+    strip(cY, "Current");
+  if (points.some(p => p.final_action.status === "U" || p.dates_for_filing.status === "U"))
+    strip(uY, "None");
+
+  // series: break the path wherever a point has no date
+  const draw = (key, color, stripDy) => {
+    let run = [];
+    const flush = () => {
+      if (run.length > 1) {
+        svg.append(svgEl("path", {
+          d: run.map((p, j) => `${j ? "L" : "M"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(""),
+          fill: "none", stroke: color, "stroke-width": 2,
+          "stroke-linejoin": "round", "stroke-linecap": "round"
+        }));
+      } else if (run.length === 1) {
+        svg.append(svgEl("circle", {
+          cx: run[0][0], cy: run[0][1], r: 2.5, fill: color
+        }));
+      }
+      run = [];
+    };
+    points.forEach((p, i) => {
+      const c = p[key];
+      if (c.date) {
+        run.push([x(i), y(Date.parse(c.date + "T00:00:00Z"))]);
+      } else {
+        flush();
+        // Both series are often C in the same month; nudge them apart so one
+        // does not silently hide under the other.
+        svg.append(svgEl("circle", {
+          cx: x(i), cy: (c.status === "C" ? cY : uY) + stripDy, r: 3,
+          fill: color, stroke: "var(--surface)", "stroke-width": 2
+        }));
+      }
+    });
+    flush();
+    // end marker
+    for (let i = points.length - 1; i >= 0; i--) {
+      const c = points[i][key];
+      if (c.date) {
+        svg.append(svgEl("circle", {
+          cx: x(i), cy: y(Date.parse(c.date + "T00:00:00Z")), r: 4,
+          fill: color, stroke: "var(--surface)", "stroke-width": 2
+        }));
+        break;
+      }
+    }
+  };
+  draw("final_action", "var(--series-fa)", -4);
+  draw("dates_for_filing", "var(--series-dff)", 4);
+
+  // x labels: first, last, and a couple between
+  const idxs = n <= 2 ? points.map((_, i) => i)
+    : [0, Math.round((n - 1) / 2), n - 1];
+  [...new Set(idxs)].forEach(i => {
+    const t = svgEl("text", {
+      x: x(i), y: H - 8, "text-anchor": i === 0 ? "start" : i === n - 1 ? "end" : "middle",
+      fill: "var(--muted)", "font-size": 11
+    });
+    t.textContent = fmtMonthShort(points[i].month);
+    svg.append(t);
+  });
+
+  // baseline
+  svg.append(svgEl("line", {
+    x1: M.l, x2: width - M.r, y1: plotBot, y2: plotBot,
+    stroke: "var(--axis)", "stroke-width": 1
+  }));
+
+  return { svg, x, hitTop: M.t, hitBot: H - M.b, width, H };
+}
+
+function barChart(points, width) {
+  const H = 142, M = { t: 10, r: 12, b: 30, l: 52 };
+  const innerW = width - M.l - M.r;
+  const vals = points.map(p => p.fa_delta_days).filter(v => v != null);
+  const max = Math.max(60, ...vals.map(Math.abs));
+  const mid = M.t + (H - M.t - M.b) / 2;
+  const half = (H - M.t - M.b) / 2;
+  const n = points.length;
+  const bw = Math.max(2, Math.min(16, innerW / n - 2));
+  const x = i => M.l + (n === 1 ? innerW / 2 : (i / (n - 1)) * innerW);
+
+  const svg = svgEl("svg", {
+    viewBox: `0 0 ${width} ${H}`, width, height: H,
+    role: "img", "aria-label": "Days the Final Action date moved each bulletin"
+  });
+
+  svg.append(svgEl("line", {
+    x1: M.l, x2: width - M.r, y1: mid, y2: mid,
+    stroke: "var(--axis)", "stroke-width": 1
+  }));
+  [[max, mid - half], [-max, mid + half]].forEach(([v, yy]) => {
+    const t = svgEl("text", {
+      x: M.l - 8, y: yy + 4, "text-anchor": "end",
+      fill: "var(--muted)", "font-size": 10
+    });
+    t.textContent = (v > 0 ? "+" : "−") + Math.abs(Math.round(v)) + "d";
+    svg.append(t);
+  });
+
+  points.forEach((p, i) => {
+    const v = p.fa_delta_days;
+    if (v == null || v === 0) return;
+    const h = Math.max(1.5, (Math.abs(v) / max) * half);
+    svg.append(svgEl("rect", {
+      x: x(i) - bw / 2, y: v > 0 ? mid - h : mid,
+      width: bw, height: h, rx: Math.min(4, bw / 2),
+      fill: v > 0 ? "var(--pos)" : "var(--neg)"
+    }));
+  });
+
+  // x labels -- this chart sits in its own card, so it needs its own
+  const idxs = n <= 2 ? points.map((_, i) => i) : [0, Math.round((n - 1) / 2), n - 1];
+  [...new Set(idxs)].forEach(i => {
+    const t = svgEl("text", {
+      x: x(i), y: H - 6,
+      "text-anchor": i === 0 ? "start" : i === n - 1 ? "end" : "middle",
+      fill: "var(--muted)", "font-size": 11
+    });
+    t.textContent = fmtMonthShort(points[i].month);
+    svg.append(t);
+  });
+
+  return { svg, x, width, H };
+}
+
+// --- tooltips --------------------------------------------------------
+
+function attachHover(wrap, chart, points, onIndex) {
+  const tip = el("div", { class: "tip" });
+  wrap.append(tip);
+  const svg = chart.svg;
+
+  const move = ev => {
+    const r = svg.getBoundingClientRect();
+    const px = ((ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left)
+             * (chart.width / r.width);
+    let best = 0, bd = Infinity;
+    points.forEach((_, i) => {
+      const d = Math.abs(chart.x(i) - px);
+      if (d < bd) { bd = d; best = i; }
+    });
+    tip.replaceChildren(...onIndex(points[best]));
+    tip.classList.add("on");
+    const tw = tip.offsetWidth || 170;
+    let left = (chart.x(best) / chart.width) * r.width - tw / 2;
+    left = Math.max(2, Math.min(r.width - tw - 2, left));
+    tip.style.left = left + "px";
+    tip.style.top = "4px";
+  };
+  const leave = () => tip.classList.remove("on");
+
+  svg.addEventListener("mousemove", move);
+  svg.addEventListener("mouseleave", leave);
+  svg.addEventListener("touchstart", move, { passive: true });
+  svg.addEventListener("touchmove", move, { passive: true });
+  svg.addEventListener("touchend", leave);
+}
+
+const cutText = c => c.status === "DATE" ? fmtDate(c.date)
+  : c.status === "C" ? "Current" : "Unavailable";
+
+// --- main ------------------------------------------------------------
+
+let SERIES = null;
+let range = "all";
+
+function visiblePoints() {
+  const pts = SERIES.points;
+  const take = { "12m": 12, "3y": 36, "5y": 60 }[range];
+  return take ? pts.slice(-take) : pts;
+}
+
+function render() {
+  const pts = visiblePoints();
+  const latest = SERIES.points[SERIES.points.length - 1];
+  const pd = SERIES.priority_date;
+  main.replaceChildren();
+
+  // hero cards
+  const fa = latest.final_action, dff = latest.dates_for_filing;
+  const cards = el("div", { class: "cards" });
+  cards.append(card("Final Action", fa, latest.fa_days_from_pd,
+                    latest.fa_current, latest.fa_delta_days));
+
+  const filingNote = dff.status !== "U" && latest.dff_current
+    ? el("p", { class: "gap", html: "<strong>You are eligible to file I-485</strong> " +
+        "if USCIS is accepting this chart." })
+    : null;
+  cards.append(card("Dates for Filing", dff, latest.dff_days_from_pd,
+                    latest.dff_current, latest.dff_delta_days, filingNote));
+  main.append(cards);
+
+  if (latest.chart_notice) {
+    main.append(el("div", { class: "notice" },
+      el("strong", {}, "Which chart applies: "),
+      document.createTextNode(latest.chart_notice)));
+  }
+
+  // line chart
+  const lineSec = el("section", { class: "chart" });
+  lineSec.append(el("div", { class: "chart-head" },
+    el("h2", {}, "Cutoff dates by bulletin"),
+    el("p", {}, "Where the lines cross your priority date is where you become current.")));
+  const lineWrap = el("div", { class: "plotwrap" });
+  lineSec.append(lineWrap);
+  lineSec.append(el("div", { class: "legend" },
+    el("span", {}, el("i", { class: "swatch line", style: "background:var(--series-fa)" }), document.createTextNode("Final Action")),
+    el("span", {}, el("i", { class: "swatch line", style: "background:var(--series-dff)" }), document.createTextNode("Dates for Filing")),
+    el("span", {}, el("i", { class: "swatch dash" }), document.createTextNode("Your priority date"))));
+
+  const ranges = el("div", { class: "ranges" });
+  ["12m", "3y", "5y", "all"].forEach(r => {
+    const b = el("button", { type: "button", "aria-pressed": String(r === range) },
+                 r === "all" ? "All" : r);
+    b.onclick = () => { range = r; render(); };
+    ranges.append(b);
+  });
+  lineSec.append(ranges);
+  main.append(lineSec);
+
+  // bar chart
+  const barSec = el("section", { class: "chart" });
+  barSec.append(el("div", { class: "chart-head" },
+    el("h2", {}, "Final Action movement"),
+    el("p", {}, "Days gained or lost each bulletin. Below the line is retrogression.")));
+  const barWrap = el("div", { class: "plotwrap" });
+  barSec.append(barWrap);
+  barSec.append(el("div", { class: "legend" },
+    el("span", {}, el("i", { class: "swatch", style: "background:var(--pos)" }), document.createTextNode("Advanced")),
+    el("span", {}, el("i", { class: "swatch", style: "background:var(--neg)" }), document.createTextNode("Retrogressed"))));
+  main.append(barSec);
+
+  // table view
+  const tbody = el("tbody");
+  [...pts].reverse().forEach(p => {
+    tbody.append(el("tr", {},
+      el("td", {}, fmtMonth(p.month)),
+      el("td", { class: "num" }, cutText(p.final_action)),
+      el("td", { class: "num" }, cutText(p.dates_for_filing)),
+      el("td", { class: "num" }, p.fa_delta_days == null ? "—"
+        : (p.fa_delta_days > 0 ? "+" : "") + p.fa_delta_days)));
+  });
+  main.append(el("details", { class: "table" },
+    el("summary", {}, `Table view (${pts.length} bulletins)`),
+    el("table", {},
+      el("thead", {}, el("tr", {},
+        el("th", {}, "Bulletin"), el("th", {}, "Final Action"),
+        el("th", {}, "Dates for Filing"), el("th", {}, "Δ days"))),
+      tbody)));
+
+  // draw charts at measured width, and redraw on resize
+  const paint = () => {
+    const w = Math.max(280, Math.floor(lineWrap.clientWidth || 340));
+    const lc = lineChart(pts, pd, w);
+    lineWrap.replaceChildren(lc.svg);
+    attachHover(lineWrap, lc, pts, p => [
+      el("span", { class: "m" }, fmtMonth(p.month)),
+      el("div", { class: "row" },
+        el("i", { class: "swatch", style: "background:var(--series-fa)" }),
+        document.createTextNode("Final Action"),
+        el("span", { class: "v" }, cutText(p.final_action))),
+      el("div", { class: "row" },
+        el("i", { class: "swatch", style: "background:var(--series-dff)" }),
+        document.createTextNode("Dates for Filing"),
+        el("span", { class: "v" }, cutText(p.dates_for_filing)))
+    ]);
+
+    const bc = barChart(pts, w);
+    barWrap.replaceChildren(bc.svg);
+    attachHover(barWrap, bc, pts, p => [
+      el("span", { class: "m" }, fmtMonth(p.month)),
+      el("div", { class: "row" }, document.createTextNode("Movement"),
+        el("span", { class: "v" }, p.fa_delta_days == null ? "—"
+          : (p.fa_delta_days > 0 ? "+" : "") + p.fa_delta_days + " days"))
+    ]);
+  };
+  paint();
+  clearTimeout(window.__rz);
+  window.onresize = () => { clearTimeout(window.__rz); window.__rz = setTimeout(paint, 150); };
+
+  // header + footer
+  document.getElementById("sub").textContent =
+    `Priority date ${fmtDate(pd)} · ${SERIES.count} bulletins tracked`;
+  document.getElementById("source-line").innerHTML =
+    `Latest bulletin: <a href="${latest.url}">${fmtMonth(latest.month)}</a>, ` +
+    `published by the U.S. Department of State.`;
+}
+
+function renderFreshness(run) {
+  const box = document.getElementById("freshness");
+  if (!run || !run.written_at) {
+    box.replaceChildren(el("span", { class: "dot none" }),
+      el("span", {}, "Last check: unknown"));
+    return;
+  }
+  const age = Date.now() - Date.parse(run.written_at);
+  const hrs = age / 3600000;
+  const blocked = run.robots_status && run.robots_status !== 404 && run.robots_status !== 200;
+  const failed = (run.failures && run.failures.length) || blocked;
+  // A recent check that failed is not healthy. Green here would be a lie.
+  const cls = failed ? "bad" : hrs < 26 ? "" : hrs < 24 * 4 ? "stale" : "none";
+  const when = hrs < 1 ? `${Math.max(1, Math.round(age / 60000))} min ago`
+    : hrs < 48 ? `${Math.round(hrs)} h ago`
+    : `${Math.round(hrs / 24)} days ago`;
+  const bits = [`Checked ${when}`];
+  if (blocked) bits.push(`fetch blocked (${run.robots_status})`);
+  if (run.failures && run.failures.length) bits.push(`${run.failures.length} error(s)`);
+  box.replaceChildren(el("span", { class: "dot " + cls }),
+    el("span", {}, bits.join(" · ")));
+}
+
+async function boot() {
+  let run = null;
+  try {
+    const r = await fetch("./data/last_run.json", { cache: "no-store" });
+    if (r.ok) run = await r.json();
+  } catch (e) { /* diagnostics are optional */ }
+  renderFreshness(run);
+
+  let data = null;
+  try {
+    const r = await fetch("./data/series.json", { cache: "no-store" });
+    if (r.ok) data = await r.json();
+  } catch (e) { /* handled below */ }
+
+  if (!data || !data.points || data.points.length === 0) {
+    document.getElementById("sub").textContent = "Priority date 18 Sep 2023";
+    renderEmpty(run && run.failures && run.failures.length
+      ? "The last fetch did not complete, so no bulletins are stored yet."
+      : "No bulletins have been fetched yet.");
+    return;
+  }
+  SERIES = data;
+  render();
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
