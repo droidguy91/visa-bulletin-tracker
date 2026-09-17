@@ -23,7 +23,8 @@ from vbt.parse import parse_bulletin, parse_index
 from vbt.urls import bulletin_url, fiscal_year, months_to_backfill
 
 FIXTURES = Path(__file__).parent / "fixtures"
-GOLDEN = json.loads((Path(__file__).parent / "golden.json").read_text("utf-8"))
+GOLDEN = json.loads(
+    (Path(__file__).parent / "golden.json").read_text("utf-8"))["months"]
 
 
 def _load(month: str):
