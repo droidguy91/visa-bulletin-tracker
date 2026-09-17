@@ -150,6 +150,12 @@ def build_series() -> dict:
         prev_fa, prev_dff = fa, dff
 
     latest = points[-1] if points else None
+    if latest:
+        # The dashboard shows which chart USCIS is accepting this month; it
+        # lives on the bulletin record, so surface it on the latest point.
+        last_rec = load_bulletin(latest["month"])
+        latest["chart_notice"] = last_rec.chart_notice
+        latest["notes"] = last_rec.notes[:3]
     series = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "priority_date": config["priority_date"],
